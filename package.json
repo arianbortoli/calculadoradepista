@@ -9,7 +9,7 @@
     "lint:fix": "prettier --write ."
   },
   "engines": {
-    "node": "lts/hydrogen"
+    "node": "24.x"
   },
   "author": "",
   "license": "MIT",
