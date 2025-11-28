@@ -1189,3 +1189,80 @@ input:focus {
     justify-content: space-between;
   }
 }
+
+/* FEATURE SECTIONS */
+.feature-section {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-header-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-left: 0.5rem;
+  border-left: 4px solid #38bdf8;
+}
+
+.section-header-main h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.feature-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.2), transparent);
+  margin: 3rem 0;
+  position: relative;
+}
+
+.feature-divider::after {
+  /* Optional decorative dot or symbol */
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 50%;
+}
+
+/* SVG ICONS IN BUTTONS */
+.btn-icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0; 
+}
+
+/* Adjust spacing for timer section wrapper since it's now inside a feature-section */
+.timer-section-wrapper {
+  margin-top: 0; /* Reset if it had top margin */
+}
+
+/* Make divider more visible */
+.feature-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.6), transparent);
+  margin: 4rem 0;
+}
+
+.feature-divider::after {
+  width: 10px;
+  height: 10px;
+  background: #38bdf8; /* Solid color for the dot */
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5); /* Add glow */
+}

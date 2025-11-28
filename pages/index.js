@@ -411,7 +411,18 @@ const TimerGroup = ({ id, onRemove }) => {
             onClick={handleStart}
             title="Iniciar"
           >
-            ▶
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none" />
+            </svg>
           </button>
         ) : (
           <>
@@ -420,14 +431,52 @@ const TimerGroup = ({ id, onRemove }) => {
               onClick={handleLap}
               title={mode === 'run' ? 'Descansar' : 'Correr'}
             >
-              {mode === 'run' ? '⏸' : '▶'}
+              {mode === 'run' ? (
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="6" y="4" width="4" height="16" fill="currentColor" stroke="none" />
+                  <rect x="14" y="4" width="4" height="16" fill="currentColor" stroke="none" />
+                </svg>
+              ) : (
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none" />
+                </svg>
+              )}
             </button>
             <button 
               className="btn-secondary btn-icon" 
               onClick={handleStop}
               title="Parar"
             >
-              ⏹
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="6" y="6" width="12" height="12" fill="currentColor" stroke="none" />
+              </svg>
             </button>
           </>
         )}
@@ -522,7 +571,7 @@ const TimerManager = () => {
 
   return (
     <div className="timer-section-wrapper">
-      <div className="timer-section-header">
+      <div className="section-header-main" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <h2>Cronômetros</h2>
           <button
@@ -533,14 +582,15 @@ const TimerManager = () => {
             ?
           </button>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button onClick={startAll} className="settings-toggle">
-            ▶ Todos
-          </button>
-          <button onClick={addGroup} className="settings-toggle">
-            + Novo Grupo
-          </button>
-        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+        <button onClick={startAll} className="settings-toggle">
+          ▶ Iniciar Todos
+        </button>
+        <button onClick={addGroup} className="settings-toggle">
+          + Novo Grupo
+        </button>
       </div>
 
       {showHelp && (
@@ -733,144 +783,151 @@ export default function Home() {
         </p>
       </header>
 
-      <section className="dashboard">
-        <article className="card compact">
-          <div className="card-header">
-            <h2>Parâmetros do treino</h2>
-            <p>Preencha dois campos e nós calculamos o terceiro.</p>
-          </div>
-
-          <div className="form-grid">
-            <label>
-              <span>
-                Distância <span className="unit">(m)</span>
-              </span>
-              <input
-                type="number"
-                min="0"
-                step="1"
-                placeholder="1000"
-                value={distance}
-                onChange={(event) => setDistance(event.target.value)}
-              />
-            </label>
-
-            <label>
-              <span>
-                Tempo total <span className="unit">(hh:mm:ss)</span>
-              </span>
-              <input
-                type="text"
-                placeholder="00:45:00"
-                value={time}
-                onChange={(event) => setTime(event.target.value)}
-              />
-            </label>
-
-            <label>
-              <span>
-                Pace <span className="unit">(mm:ss / km)</span>
-              </span>
-              <input
-                type="text"
-                placeholder="04:30"
-                value={pace}
-                onChange={(event) => setPace(event.target.value)}
-              />
-            </label>
-          </div>
-        </article>
-
-        <article className="card compact">
-          <div className="card-header">
-            <h2>Resultados</h2>
-          </div>
-
-          <div className="results-grid single">
-            <div
-              className={`result-tile ${
-                highlightedField === 'distance' ? 'focus' : ''
-              }`}
-            >
-              <p className="result-label">Distância</p>
-              <p className="result-value">{distanceDisplay}</p>
-              <p className="result-detail">
-                {distanceIsCalculated
-                  ? 'Calculado'
-                  : hasDistance
-                    ? 'Informado'
-                    : '—'}
-              </p>
+      <div className="feature-section calculator-section">
+        <div className="section-header-main">
+          <h2>Calculadora de Ritmo</h2>
+        </div>
+        <section className="dashboard">
+          <article className="card compact">
+            <div className="card-header">
+              <h2>Parâmetros do treino</h2>
+              <p>Preencha dois campos e nós calculamos o terceiro.</p>
             </div>
-            <div
-              className={`result-tile ${
-                highlightedField === 'time' ? 'focus' : ''
-              }`}
-            >
-              <p className="result-label">Tempo</p>
-              <p className="result-value">{timeDisplay}</p>
-              <p className="result-detail">
-                {timeIsCalculated ? 'Calculado' : hasTime ? 'Informado' : '—'}
-              </p>
-            </div>
-            <div
-              className={`result-tile ${
-                highlightedField === 'pace' ? 'focus' : ''
-              }`}
-            >
-              <p className="result-label">Pace</p>
-              <p className="result-value">{paceDisplay}</p>
-              <p className="result-detail">
-                {paceIsCalculated ? 'Calculado' : hasPace ? 'Informado' : '—'}
-              </p>
-            </div>
-          </div>
 
-          <LapSplits splits={lapSplits} lapLength={lapLengthSafe} />
-        </article>
-
-        <article className="card track">
-          <div className="card-header track-header">
-            <div>
-              <h2>Visual da pista</h2>
-              <p>Cada volta representa {lapLengthLabel}.</p>
-            </div>
-            <button
-              type="button"
-              className="settings-toggle"
-              onClick={() => setIsConfigOpen((prev) => !prev)}
-            >
-              {isConfigOpen ? 'Pronto' : 'Ajustar'}
-            </button>
-          </div>
-          {isConfigOpen && (
-            <div className="track-config">
+            <div className="form-grid">
               <label>
-                Comprimento da volta (m)
+                <span>
+                  Distância <span className="unit">(m)</span>
+                </span>
                 <input
                   type="number"
-                  min="50"
-                  step="10"
-                  value={lapLengthInput}
-                  onChange={handleLapLengthInput}
+                  min="0"
+                  step="1"
+                  placeholder="1000"
+                  value={distance}
+                  onChange={(event) => setDistance(event.target.value)}
                 />
               </label>
+
+              <label>
+                <span>
+                  Tempo total <span className="unit">(hh:mm:ss)</span>
+                </span>
+                <input
+                  type="text"
+                  placeholder="00:45:00"
+                  value={time}
+                  onChange={(event) => setTime(event.target.value)}
+                />
+              </label>
+
+              <label>
+                <span>
+                  Pace <span className="unit">(mm:ss / km)</span>
+                </span>
+                <input
+                  type="text"
+                  placeholder="04:30"
+                  value={pace}
+                  onChange={(event) => setPace(event.target.value)}
+                />
+              </label>
+            </div>
+          </article>
+
+          <article className="card compact">
+            <div className="card-header">
+              <h2>Resultados</h2>
+            </div>
+
+            <div className="results-grid single">
+              <div
+                className={`result-tile ${
+                  highlightedField === 'distance' ? 'focus' : ''
+                }`}
+              >
+                <p className="result-label">Distância</p>
+                <p className="result-value">{distanceDisplay}</p>
+                <p className="result-detail">
+                  {distanceIsCalculated
+                    ? 'Calculado'
+                    : hasDistance
+                      ? 'Informado'
+                      : '—'}
+                </p>
+              </div>
+              <div
+                className={`result-tile ${
+                  highlightedField === 'time' ? 'focus' : ''
+                }`}
+              >
+                <p className="result-label">Tempo</p>
+                <p className="result-value">{timeDisplay}</p>
+                <p className="result-detail">
+                  {timeIsCalculated ? 'Calculado' : hasTime ? 'Informado' : '—'}
+                </p>
+              </div>
+              <div
+                className={`result-tile ${
+                  highlightedField === 'pace' ? 'focus' : ''
+                }`}
+              >
+                <p className="result-label">Pace</p>
+                <p className="result-value">{paceDisplay}</p>
+                <p className="result-detail">
+                  {paceIsCalculated ? 'Calculado' : hasPace ? 'Informado' : '—'}
+                </p>
+              </div>
+            </div>
+
+            <LapSplits splits={lapSplits} lapLength={lapLengthSafe} />
+          </article>
+
+          <article className="card track">
+            <div className="card-header track-header">
+              <div>
+                <h2>Visual da pista</h2>
+                <p>Cada volta representa {lapLengthLabel}.</p>
+              </div>
               <button
                 type="button"
-                className="settings-toggle ghost"
-                onClick={handleResetLapLength}
+                className="settings-toggle"
+                onClick={() => setIsConfigOpen((prev) => !prev)}
               >
-                Redefinir para 400 m
+                {isConfigOpen ? 'Pronto' : 'Ajustar'}
               </button>
             </div>
-          )}
-          <TrackVisual lapData={lapData} lapLength={lapLengthSafe} />
-        </article>
-      </section>
+            {isConfigOpen && (
+              <div className="track-config">
+                <label>
+                  Comprimento da volta (m)
+                  <input
+                    type="number"
+                    min="50"
+                    step="10"
+                    value={lapLengthInput}
+                    onChange={handleLapLengthInput}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="settings-toggle ghost"
+                  onClick={handleResetLapLength}
+                >
+                  Redefinir para 400 m
+                </button>
+              </div>
+            )}
+            <TrackVisual lapData={lapData} lapLength={lapLengthSafe} />
+          </article>
+        </section>
+      </div>
 
-      <hr className="section-divider" />
+      <div className="feature-divider"></div>
 
-      <TimerManager />
+      <div className="feature-section timers-section">
+        <TimerManager />
+      </div>
     </main>
   );
 }
