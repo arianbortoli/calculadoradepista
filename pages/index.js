@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 const DEFAULT_LAP_METERS = 400;
 const METERS_IN_KM = 1000;
@@ -241,6 +241,343 @@ const LapSplits = ({ splits, lapLength }) => {
   );
 };
 
+const formatTimer = (ms) => {
+  if (ms < 0) ms = 0;
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const centiseconds = Math.floor((ms % 1000) / 10);
+  return `${padTime(minutes)}:${padTime(seconds)}.${padTime(centiseconds)}`;
+};
+
+const TimerGroup = ({ id, onRemove }) => {
+  const [name, setName] = useState(`Grupo ${id}`);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [mode, setMode] = useState('idle'); // 'idle' | 'run' | 'rest'
+  const [startTime, setStartTime] = useState(null);
+  const [elapsed, setElapsed] = useState(0);
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    let interval;
+    if (mode !== 'idle' && startTime) {
+      interval = setInterval(() => {
+        setElapsed(Date.now() - startTime);
+      }, 30);
+    }
+    return () => clearInterval(interval);
+  }, [mode, startTime]);
+
+  useEffect(() => {
+    const handleGlobalStart = () => {
+      if (mode === 'idle') {
+        handleStart();
+      }
+    };
+    window.addEventListener('start-all-timers', handleGlobalStart);
+    return () => {
+      window.removeEventListener('start-all-timers', handleGlobalStart);
+    };
+  }, [mode]); // Re-bind when mode changes to ensure handleStart has correct closure if needed
+
+  const handleStart = () => {
+    setMode('run');
+    setStartTime(Date.now());
+    setElapsed(0);
+  };
+
+  const handleLap = () => {
+    if (mode === 'idle') return;
+    const duration = Date.now() - startTime;
+    const newEntry = {
+      mode,
+      duration,
+      timestamp: Date.now(),
+      id: Date.now() + Math.random(),
+    };
+    // Append new entry to the end
+    setHistory((prev) => [...prev, newEntry]);
+
+    // Toggle mode
+    const nextMode = mode === 'run' ? 'rest' : 'run';
+    setMode(nextMode);
+    setStartTime(Date.now());
+    setElapsed(0);
+  };
+
+  const handleStop = () => {
+    if (mode !== 'idle') {
+      const duration = Date.now() - startTime;
+      const newEntry = {
+        mode,
+        duration,
+        timestamp: Date.now(),
+        id: Date.now() + Math.random(),
+      };
+      setHistory((prev) => [...prev, newEntry]);
+    }
+    setMode('idle');
+    setStartTime(null);
+    setElapsed(0);
+  };
+
+  const handleReset = () => {
+    setMode('idle');
+    setStartTime(null);
+    setElapsed(0);
+    setHistory([]);
+  };
+
+  // Process history into pairs (run + rest)
+  const historyRows = useMemo(() => {
+    const rows = [];
+    let currentRun = null;
+
+    history.forEach((entry) => {
+      if (entry.mode === 'run') {
+        currentRun = { run: entry, rest: null };
+        rows.push(currentRun);
+      } else if (entry.mode === 'rest' && currentRun) {
+        currentRun.rest = entry;
+        currentRun = null; // Reset current run after pairing
+      } else if (entry.mode === 'rest' && !currentRun) {
+        // Standalone rest (shouldn't happen in normal flow but handle just in case)
+        rows.push({ run: null, rest: entry });
+      }
+    });
+    return rows;
+  }, [history]);
+
+  return (
+    <article className="card compact timer-group">
+      <div className="card-header timer-header">
+        {isEditingName ? (
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => setIsEditingName(false)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') setIsEditingName(false);
+            }}
+            autoFocus
+            className="timer-name-input"
+          />
+        ) : (
+          <h3 onClick={() => setIsEditingName(true)} title="Clique para renomear">
+            {name}
+          </h3>
+        )}
+        <button
+          onClick={() => onRemove(id)}
+          className="timer-remove"
+          aria-label="Remover grupo"
+          title="Remover"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div className="timer-display">
+        <span className={`timer-value ${mode === 'rest' ? 'text-rest' : ''}`}>
+          {formatTimer(elapsed)}
+        </span>
+        <span className="timer-label">
+          {mode === 'idle'
+            ? 'Pronto'
+            : mode === 'run'
+              ? 'Correndo'
+              : 'Descanso'}
+        </span>
+      </div>
+
+      <div className="timer-controls">
+        {mode === 'idle' ? (
+          <button 
+            className="btn-primary btn-icon btn-run" 
+            onClick={handleStart}
+            title="Iniciar"
+          >
+            ▶
+          </button>
+        ) : (
+          <>
+            <button 
+              className={`btn-icon ${mode === 'run' ? 'btn-rest' : 'btn-run'}`}
+              onClick={handleLap}
+              title={mode === 'run' ? 'Descansar' : 'Correr'}
+            >
+              {mode === 'run' ? '⏸' : '▶'}
+            </button>
+            <button 
+              className="btn-secondary btn-icon" 
+              onClick={handleStop}
+              title="Parar"
+            >
+              ⏹
+            </button>
+          </>
+        )}
+        {mode === 'idle' && history.length > 0 && (
+          <button 
+            className="btn-secondary btn-icon" 
+            onClick={handleReset}
+            title="Limpar"
+          >
+            ↺
+          </button>
+        )}
+        {history.length > 0 && (
+          <button
+            className="btn-secondary btn-icon"
+            onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+            title={
+              isHistoryOpen
+                ? 'Ocultar Histórico'
+                : `Ver Histórico (${historyRows.length})`
+            }
+            style={isHistoryOpen ? { background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8' } : {}}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {history.length > 0 && isHistoryOpen && (
+        <div className="timer-history-section">
+          <div className="timer-history-table">
+            <div className="history-header">
+              <span>#</span>
+              <span>Corrida</span>
+              <span>Descanso</span>
+            </div>
+            <div className="history-body">
+              {historyRows.map((row, index) => (
+                <div key={index} className="history-row">
+                  <span className="history-idx">{index + 1}</span>
+                  <span className="history-run">
+                    {row.run ? formatTimer(row.run.duration) : '—'}
+                  </span>
+                  <span className="history-rest">
+                    {row.rest ? formatTimer(row.rest.duration) : '—'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </article>
+  );
+};
+
+const TimerManager = () => {
+  const [groups, setGroups] = useState([{ id: 1 }]);
+  const [showHelp, setShowHelp] = useState(false);
+
+  const addGroup = () => {
+    const newId =
+      groups.length > 0 ? Math.max(...groups.map((g) => g.id)) + 1 : 1;
+    setGroups([...groups, { id: newId }]);
+  };
+
+  const removeGroup = (id) => {
+    setGroups(groups.filter((g) => g.id !== id));
+  };
+
+  const startAll = () => {
+    // Dispatch a custom event that TimerGroup components listen for
+    const event = new CustomEvent('start-all-timers');
+    window.dispatchEvent(event);
+  };
+
+  return (
+    <div className="timer-section-wrapper">
+      <div className="timer-section-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <h2>Cronômetros</h2>
+          <button
+            className={`help-toggle ${showHelp ? 'active' : ''}`}
+            onClick={() => setShowHelp(!showHelp)}
+            title="Como usar"
+          >
+            ?
+          </button>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button onClick={startAll} className="settings-toggle">
+            ▶ Todos
+          </button>
+          <button onClick={addGroup} className="settings-toggle">
+            + Novo Grupo
+          </button>
+        </div>
+      </div>
+
+      {showHelp && (
+        <div className="timer-help-card">
+          <h4>Como usar os cronômetros:</h4>
+          <ul>
+            <li>
+              <strong>Iniciar (▶):</strong> Começa a contar o tempo de corrida
+              (Azul).
+            </li>
+            <li>
+              <strong>Lap (⏸):</strong> Registra a parcial e muda para descanso
+              (Rosa).
+            </li>
+            <li>
+              <strong>Lap (▶):</strong> Registra o descanso e inicia nova
+              corrida (Azul).
+            </li>
+            <li>
+              <strong>Renomear:</strong> Clique no nome "Grupo X" para editar.
+            </li>
+            <li>
+              <strong>Todos (▶):</strong> Inicia todos os cronômetros parados.
+            </li>
+          </ul>
+        </div>
+      )}
+
+      <div className="timer-grid">
+        {groups.map((group) => (
+          <TimerGroup key={group.id} id={group.id} onRemove={removeGroup} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export default function Home() {
   const [distance, setDistance] = useState('');
   const [time, setTime] = useState('');
@@ -378,6 +715,8 @@ export default function Home() {
         label: `${fullLaps + 1}ª volta — ${cumulativeMeters} m`,
         time: splitTime,
         isFinal: true,
+        lap: fullLaps + 1,
+        cumulativeMeters,
       });
     }
 
@@ -389,7 +728,8 @@ export default function Home() {
       <header className="hero">
         <h1>Calculadora de Pista</h1>
         <p className="subtitle">
-         Treine com precisão: calcule seu pace, tempo ou distância e visualize suas voltas na pista.
+          Treine com precisão: calcule seu pace, tempo ou distância e visualize
+          suas voltas na pista.
         </p>
       </header>
 
@@ -402,7 +742,9 @@ export default function Home() {
 
           <div className="form-grid">
             <label>
-              <span>Distância (m)</span>
+              <span>
+                Distância <span className="unit">(m)</span>
+              </span>
               <input
                 type="number"
                 min="0"
@@ -414,7 +756,9 @@ export default function Home() {
             </label>
 
             <label>
-              <span>Tempo total (hh:mm:ss)</span>
+              <span>
+                Tempo total <span className="unit">(hh:mm:ss)</span>
+              </span>
               <input
                 type="text"
                 placeholder="00:45:00"
@@ -424,7 +768,9 @@ export default function Home() {
             </label>
 
             <label>
-              <span>Pace (mm:ss por km)</span>
+              <span>
+                Pace <span className="unit">(mm:ss / km)</span>
+              </span>
               <input
                 type="text"
                 placeholder="04:30"
@@ -521,6 +867,10 @@ export default function Home() {
           <TrackVisual lapData={lapData} lapLength={lapLengthSafe} />
         </article>
       </section>
+
+      <hr className="section-divider" />
+
+      <TimerManager />
     </main>
   );
 }

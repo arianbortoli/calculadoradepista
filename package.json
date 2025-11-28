@@ -1,7 +1,7 @@
 {
-  "name": "clone-tabnews",
+  "name": "calculadora-de-pista",
   "version": "1.0.0",
-  "description": "Repositório utilizado no curso.dev que recria o sistema do tabnews",
+  "description": "Repositório utilizado para a calculadora de pista",
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
